@@ -14,7 +14,8 @@ error()   { echo -e "\033[1;31m[ERROR]\033[0m $*" >&2; }
 rollback() {
     error "An error occurred. Performing git reset..."
     if git rev-parse --is-inside-work-tree &>/dev/null; then
-        git reset --hard HEAD || error "git reset failed"
+        git reset --hard
+	git reset
     else
         error "Not a git repository — skipping reset"
     fi
