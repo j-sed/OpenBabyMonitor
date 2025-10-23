@@ -50,6 +50,15 @@ BM_CONTROL_CAM_DIR=$BM_DIR/control/.cam
 BM_CONTROL_CAM_CONNECTED_FILE=$BM_CONTROL_CAM_DIR/connected
 BM_CONTROL_TIME_SYNCED_FILE=$BM_DIR/control/.time_synced
 
+SETUP_VENV=true
+if [[ "$SETUP_VENV" = true ]]; then
+        if [ ! -d $BM_DIR/venv ]; then
+                python3 -m venv $BM_DIR/venv
+                source $BM_DIR/venv/bin/activate
+        fi
+fi
+
+
 SETUP_AUDIO=true
 if [[ "$SETUP_AUDIO" = true ]]; then
     mkdir -p $BM_CONTROL_MIC_DIR
@@ -58,13 +67,13 @@ if [[ "$SETUP_AUDIO" = true ]]; then
     sudo ln -sfn $BM_SHAREDMEM_DIR $BM_LINKED_STREAM_DIR
 fi
 
-UPDATE=true
+UPDATE=false
 if [[ "$UPDATE" = true ]]; then
     sudo apt -y update
     sudo apt -y dist-upgrade
 fi
 
-SETUP_SWAPSPACE=true
+SETUP_SWAPSPACE=false
 if [[ "$SETUP_SWAPSPACE" = true ]]; then
     sudo dphys-swapfile swapoff
     sudo sed -i "s/CONF_SWAPSIZE=.*/CONF_SWAPSIZE=$SWAP_SIZE/g" /etc/dphys-swapfile
@@ -77,7 +86,7 @@ if [[ "$INSTALL_PACKAGES" = true ]]; then
     sudo apt -y install unzip
 
     # Install time server
-    sudo apt -y install ntp
+#    sudo apt -y install ntp
 
     # Install inotify for flag monitoring
     sudo apt -y install inotify-tools
@@ -102,9 +111,9 @@ if [[ "$INSTALL_PACKAGES" = true ]]; then
     sudo apt -y install pandoc
 
     # Install required Python packages
-    sudo apt -y install libatlas-base-dev # Requirement for numpy
+    sudo apt -y install libopenblas-dev # Requirement for numpy
     sudo apt -y install libopenexr-dev # Requirement for OpenCV
-    pip3 install --no-cache-dir -r $BM_DIR/requirements.txt
+    $BM_DIR/venv/bin/pip3 install --no-cache-dir -r $BM_DIR/requirements.txt
 
     sudo apt -y autoremove
 fi
@@ -127,7 +136,7 @@ if [[ "$SETUP_BASH_CONFIG" = true ]]; then
     echo -e "source $BM_ENV_EXPORTS_PATH\n" >> /home/$BM_USER/.bashrc
 fi
 
-DISABLE_BLUETOOTH=true
+DISABLE_BLUETOOTH=false
 if [[ "$DISABLE_BLUETOOTH" = true ]]; then
     # Disable bluetooth
     echo "
@@ -308,7 +317,7 @@ if [[ "$INSTALL_JS_COOKIE" = true ]]; then
     wget -P $BM_LINKED_SITE_DIR/library/js-cookie/js https://github.com/js-cookie/js-cookie/releases/download/v$JS_COOKIE_VERSION/js.cookie.min.js
 fi
 
-INSTALL_PICAM=true
+INSTALL_PICAM=false
 if [[ "$INSTALL_PICAM" = true ]]; then
     # Create directories and symbolic links
     sudo install -d -o $BM_USER -g $BM_WEB_GROUP -m $BM_READ_PERMISSIONS $BM_PICAM_DIR{,/archive}
@@ -460,14 +469,13 @@ if [[ "$INSTALL_SERVER" = true ]]; then
     # Configure MySQL
     MYSQL_ROOT_PASSWORD=$(python3 -c "import json; f = open('$BM_DIR/config/config.json', 'r'); print(json.load(f)['database']['root_account']['password']); f.close()")
     sudo mysql --user=root <<_EOF_
-UPDATE mysql.user SET Password=PASSWORD('$MYSQL_ROOT_PASSWORD') WHERE User='root';
+ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '$MYSQL_ROOT_PASSWORD';
 DELETE FROM mysql.user WHERE User='';
 DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');
 DROP DATABASE IF EXISTS test;
-DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';
+DELETE FROM mysql.db WHERE Db IN ('test', 'test\\_%');
 FLUSH PRIVILEGES;
 _EOF_
-
     # Configure PHP
     PHP_INI_CLI_PATH=$(php -i | grep /.+/php.ini -oE)
     PHP_DIR=$(dirname $(dirname $PHP_INI_CLI_PATH))

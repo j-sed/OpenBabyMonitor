@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/home/jsed/OpenBabyMonitor/venv/bin/python3
 
 import sys
 import os
@@ -31,7 +31,7 @@ def select_mic(auto_choice=False):
 
 def select_mic_id(auto_choice=False):
     output = subprocess.check_output(['arecord', '-l'], text=True)
-    matches = re.findall('^card (\d+): (.*), device (\d): (.*)$',
+    matches = re.findall(r"^card (\d+): (.*), device (\d): (.*)$",
                          output,
                          flags=re.MULTILINE)
 
@@ -85,7 +85,7 @@ def select_mic_volume_control(sound_card_number, auto_choice=False):
     output = subprocess.check_output(['amixer', '-c', sound_card_number],
                                      text=True)
 
-    matches = re.findall('^.+ \'(.+)\',\d+$\n^  Capabilities: .*c?volume.*$',
+    matches = re.findall(r'^.+ \'(.+)\',\d+$\n^  Capabilities: .*c?volume.*$',
                          output,
                          flags=re.MULTILINE)
 

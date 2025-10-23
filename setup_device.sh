@@ -17,11 +17,11 @@ BM_LOCALE=en_GB.UTF-8
 
 source <(sed "s/INTERACTIVE=True/INTERACTIVE=False/g" /usr/bin/raspi-config)
 
-if [[ -z "$BM_DEVICE_PW" ]]; then
-    passwd $USER
-else
-    echo "$USER:$BM_DEVICE_PW" | chpasswd
-fi
+#if [[ -z "$BM_DEVICE_PW" ]]; then
+#    passwd $USER
+#else
+#    echo "$USER:$BM_DEVICE_PW" | chpasswd
+#fi
 
 do_hostname $BM_HOSTNAME
 

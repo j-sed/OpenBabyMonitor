@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/home/jsed/OpenBabyMonitor/venv/bin/python3
 
 if __name__ == '__main__':
     import standby
