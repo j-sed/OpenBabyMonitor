@@ -467,16 +467,16 @@ fi
 INSTALL_SERVER=true
 if [[ "$INSTALL_SERVER" = true ]]; then
 
-DB_FLAVOR=$(mysql -Nse "SELECT @@VERSION;")
-if [[ "$DB_FLAVOR" == *MariaDB* ]]; then
-    SQL_CMD="ALTER USER 'root'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';"
-else
-    SQL_CMD="ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}';"
-fi
-
-sudo mysql --user=root <<_EOF_
-${SQL_CMD}
-DELETE FROM mysql.user WHERE User='' OR (User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1'));
+    DB_FLAVOR=$(mysql -Nse "SELECT @@VERSION;")
+    if [[ "$DB_FLAVOR" == *MariaDB* ]]; then
+       SQL_CMD="ALTER USER 'root'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';"
+    else
+       SQL_CMD="ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}';"
+    fi
+    MYSQL_ROOT_PASSWORD=$(python3 -c "import json; f = open('$BM_DIR/config/config.json', 'r'); print(json.load(f)['database']['root_account']['password']); f.close()")
+    sudo mysql --user=root --password="${MYSQL_ROOT_PASSWORD}" <<_EOF_
+    ${SQL_CMD}
+    DELETE FROM mysql.user WHERE User='' OR (User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1'));
 DROP DATABASE IF EXISTS test;
 DELETE FROM mysql.db WHERE Db IN ('test', 'test\\_%');
 FLUSH PRIVILEGES;
